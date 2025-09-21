@@ -70,7 +70,7 @@ class NotificationService {
       const res = await fetch('/api/notifications/mark-all-read', { method: 'POST' })
       if (!res.ok) throw new Error(`Failed to mark all as read: ${res.status}`)
     } catch (e) {
-      console.warn('NotificationService: markAllAsRead failed (ignored)', e)
+      // ignore failures in preview environment
     }
   }
 
@@ -161,7 +161,7 @@ class NotificationService {
     return this.show({
       type: "success",
       title: "Payment Successful",
-      message: `Successfully upgraded to ${plan} plan for ₹${amount}`,
+      message: `Successfully upgraded to ${plan} plan for ��${amount}`,
       duration: 8000,
     })
   }
