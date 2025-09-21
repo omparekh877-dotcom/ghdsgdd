@@ -291,7 +291,7 @@ export default function NewSale() {
                 <Input type="number" min={0} step={0.01} placeholder="Unit price" value={form.productUnitPrice || 0} onChange={e => setForm(prev => ({ ...prev, productUnitPrice: Number(e.target.value) }))} />
               </div>
               <div>
-                <Button type="button" variant="outline" onClick={addProductItem}>Add Product</Button>
+                <Button type="button" variant="outline" className="h-11 w-full sm:w-auto" onClick={addProductItem}>Add Product</Button>
               </div>
             </div>
 
@@ -310,9 +310,9 @@ export default function NewSale() {
                 <Input type="number" min={1} placeholder="Qty" value={form.serviceQty || 1} onChange={e => setForm(prev => ({ ...prev, serviceQty: Number(e.target.value) }))} />
                 <Input type="number" min={0} step={0.01} placeholder="Unit price" value={form.serviceUnitPrice || 0} onChange={e => setForm(prev => ({ ...prev, serviceUnitPrice: Number(e.target.value) }))} />
               </div>
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={addServiceItem}>Add Service</Button>
-                <Button type="button" variant="outline" onClick={addCustomService}>Add Custom Service</Button>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button type="button" variant="outline" className="h-11 w-full sm:w-auto" onClick={addServiceItem}>Add Service</Button>
+                <Button type="button" variant="outline" className="h-11 w-full sm:w-auto" onClick={addCustomService}>Add Custom Service</Button>
               </div>
             </div>
 
@@ -426,7 +426,7 @@ export default function NewSale() {
             {form.salespersonId && (
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Commission ({(form.commissionRatePct||0).toFixed(2)}%)</span>
-                <span className="font-medium">₹{commissionAmount.toFixed(2)}</span>
+                <span className="font-medium">��{commissionAmount.toFixed(2)}</span>
               </div>
             )}
             <div className="flex items-center justify-between border-t pt-2">
