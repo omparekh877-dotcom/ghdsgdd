@@ -78,8 +78,8 @@ export const notificationsApi = {
         body: JSON.stringify(input),
       });
     } catch (e) {
-      console.warn('Notifications: create failed', e);
-      throw e;
+      console.debug('Notifications: create failed (ignored)', e);
+      return undefined as any;
     }
   },
   async list(unread?: boolean) {
