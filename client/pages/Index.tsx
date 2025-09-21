@@ -191,7 +191,7 @@ export default function Index() {
             </p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
             {businessTypes.map((business) => {
               const Icon = business.icon;
               const isSelected = selectedBusinessType === business.type;
@@ -258,7 +258,7 @@ export default function Index() {
             </p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               
