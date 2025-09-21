@@ -60,8 +60,10 @@ async function http<T>(url: string, options?: RequestInit): Promise<T> {
   } catch (err: any) {
     // Annotate TypeError from fetch to provide clearer actionable logs
     if (err instanceof TypeError && /failed to fetch/i.test(err.message)) {
-      console.error('Network error while fetching', fullUrl, err);
-      throw new Error('Network error: failed to reach the server. Check your network or the dev server proxy.');
+      // In preview environments this is expected when the internal proxy or backend isn't available.
+      // Avoid noisy errors; callers should handle and degrade gracefully.
+      console.debug('Network fetch failure (suppressed):', fullUrl);
+      throw new Error('Network error: failed to reach the server.');
     }
 
     throw err instanceof Error ? err : new Error('Network error');
