@@ -87,7 +87,7 @@ export default function BackButton({
   const breadcrumbs = showBreadcrumb ? generateBreadcrumbs() : [];
 
   return (
-    <div className={`flex items-center gap-4 ${className}`}>
+    <div data-back-button className={`flex items-center gap-4 ${className}`}>
       {/* Back Button */}
       <Button
         variant="outline"

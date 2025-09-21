@@ -257,10 +257,10 @@ export default function InternalChat() {
   }
 
   return (
-    <div className="container mx-auto p-6 h-[calc(100vh-8rem)]">
-      <div className="flex h-full bg-white rounded-lg shadow-lg overflow-hidden">
+    <div className="container mx-auto p-4 sm:p-6 min-h-screen">
+      <div className="flex flex-col md:flex-row h-full bg-white rounded-lg shadow-lg overflow-hidden">
         {/* Sidebar - Channels */}
-        <div className="w-80 border-r bg-gray-50 flex flex-col">
+        <div className="w-full md:w-80 border-r bg-gray-50 flex flex-col">
           <div className="p-4 border-b">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Team Chat</h2>
@@ -513,7 +513,7 @@ export default function InternalChat() {
 
               {/* Messages */}
               <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4">
+                <div className="space-y-4 pb-24 md:pb-4">
                   {messages.map((message) => (
                     <div key={message.id} className={`flex ${message.senderId === user.id ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-xs lg:max-w-md ${

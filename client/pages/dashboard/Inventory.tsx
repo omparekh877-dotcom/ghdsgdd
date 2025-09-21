@@ -200,7 +200,7 @@ export default function Inventory() {
       )}
 
       {/* Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -268,7 +268,7 @@ export default function Inventory() {
             </CardHeader>
             <CardContent>
               {/* Filters */}
-              <div className="flex gap-4 mb-6">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
                 <div className="flex-1">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -283,7 +283,7 @@ export default function Inventory() {
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full sm:w-48 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="all">All Categories</option>
                   {categories.map(category => (
@@ -322,7 +322,7 @@ export default function Inventory() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 justify-start sm:justify-end">
                       <Button variant="outline" size="sm">
                         <Eye className="w-4 h-4 mr-2" />
                         View

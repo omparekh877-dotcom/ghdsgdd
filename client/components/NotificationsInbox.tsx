@@ -52,7 +52,7 @@ export default function NotificationsInbox() {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-96">
+      <SheetContent side="right" className="w-[92vw] max-w-sm md:w-96">
         <SheetHeader>
           <SheetTitle className="flex items-center justify-between">
             <span>Inbox</span>

@@ -41,12 +41,13 @@ class NotificationService {
   // Server-backed notifications API
   async getNotifications(_businessId?: string): Promise<BusinessNotification[]> {
     try {
-      const res = await fetch('/api/notifications')
-      if (!res.ok) throw new Error(`Failed to fetch notifications: ${res.status}`)
-      const data = await res.json()
-      return data as BusinessNotification[]
+      const url = window.location.origin ? `${window.location.origin}/api/notifications` : '/api/notifications';
+      const res = await fetch(url, { headers: { 'Content-Type': 'application/json' } });
+      if (!res.ok) return [];
+      const data = await res.json().catch(() => []);
+      return Array.isArray(data) ? data as BusinessNotification[] : [];
     } catch (e) {
-      console.warn('NotificationService: getNotifications failed, returning empty', e)
+      // Silent failure to avoid noisy console errors in preview environments where backend isn't reachable
       return []
     }
   }
@@ -60,7 +61,7 @@ class NotificationService {
       })
       if (!res.ok) throw new Error(`Failed to mark as read: ${res.status}`)
     } catch (e) {
-      console.warn('NotificationService: markAsRead failed (ignored)', e)
+      // ignore failures in preview environment
     }
   }
 
@@ -69,7 +70,7 @@ class NotificationService {
       const res = await fetch('/api/notifications/mark-all-read', { method: 'POST' })
       if (!res.ok) throw new Error(`Failed to mark all as read: ${res.status}`)
     } catch (e) {
-      console.warn('NotificationService: markAllAsRead failed (ignored)', e)
+      // ignore failures in preview environment
     }
   }
 
@@ -160,7 +161,7 @@ class NotificationService {
     return this.show({
       type: "success",
       title: "Payment Successful",
-      message: `Successfully upgraded to ${plan} plan for ₹${amount}`,
+      message: `Successfully upgraded to ${plan} plan for ��${amount}`,
       duration: 8000,
     })
   }
