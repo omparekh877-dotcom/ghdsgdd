@@ -191,7 +191,7 @@ export default function Index() {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
             {businessTypes.map((business) => {
               const Icon = business.icon;
               const isSelected = selectedBusinessType === business.type;
@@ -207,7 +207,7 @@ export default function Index() {
                   <CardHeader>
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg flex items-center justify-center">
-                        <Icon className="w-6 h-6 text-blue-600" />
+                        <Icon className="w-5 h-5 text-blue-600" />
                       </div>
                       <CardTitle className="text-lg">{business.title}</CardTitle>
                     </div>
@@ -258,7 +258,7 @@ export default function Index() {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               
@@ -266,7 +266,7 @@ export default function Index() {
                 <Card key={index} className="border-0 shadow-lg bg-white hover:shadow-xl transition-all duration-200">
                   <CardHeader>
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg flex items-center justify-center mb-4">
-                      <Icon className="w-6 h-6 text-blue-600" />
+                      <Icon className="w-5 h-5 text-blue-600" />
                     </div>
                     <CardTitle className="text-lg mb-2">{feature.title}</CardTitle>
                     <CardDescription className="text-gray-600 leading-relaxed">
