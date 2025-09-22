@@ -58,6 +58,7 @@ import CRM from "./pages/dashboard/CRM"
 import DocumentVault from "./pages/dashboard/DocumentVault"
 import OwnerAnalytics from "./pages/dashboard/OwnerAnalytics"
 import PerformanceReports from "./pages/dashboard/PerformanceReports"
+import UpgradeToPremium from "./pages/UpgradeToPremium"
 
 const queryClient = new QueryClient()
 
@@ -722,11 +723,7 @@ const App = () => (
               path="/upgrade-to-premium"
               element={
                 <ProtectedRoute>
-                  <PlaceholderPage
-                    title="Upgrade to Premium"
-                    description="Unlock advanced features by upgrading your plan."
-                    feature="Premium upgrade"
-                  />
+                  <UpgradeToPremium />
                 </ProtectedRoute>
               }
             />
