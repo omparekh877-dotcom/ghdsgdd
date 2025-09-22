@@ -724,7 +724,7 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center space-x-4 p-4 rounded-lg bg-blue-50 border border-blue-100">
+                  <div className="flex items-center space-x-4 p-3 rounded-lg bg-blue-50 border border-blue-100">
                     <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
                       <TrendingUp className="w-5 h-5 text-white" />
                     </div>
