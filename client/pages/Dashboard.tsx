@@ -286,7 +286,7 @@ export default function Dashboard() {
                     <Trophy className="w-5 h-5" />
                     <span className="text-sm font-medium flex items-center gap-2">
                       Staff Leaderboard
-                      {!isPremium && <PremiumBadge />}
+                      {!isPremium && <Crown className="w-3 h-3 text-yellow-600" aria-label="Premium" />}
                     </span>
                     <ChevronRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                   </Link>
@@ -299,7 +299,7 @@ export default function Dashboard() {
                     <UserCheck className="w-5 h-5" />
                     <span className="text-sm font-medium flex items-center gap-2">
                       Task Assignment
-                      {!isPremium && <PremiumBadge />}
+                      {!isPremium && <Crown className="w-3 h-3 text-yellow-600" aria-label="Premium" />}
                     </span>
                     <ChevronRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                   </Link>
@@ -311,7 +311,7 @@ export default function Dashboard() {
                     <HelpCircle className="w-5 h-5" />
                     <span className="text-sm font-medium flex items-center gap-2">
                       Support Tickets
-                      {!isPremium && <PremiumBadge />}
+                      {!isPremium && <Crown className="w-3 h-3 text-yellow-600" aria-label="Premium" />}
                     </span>
                     <ChevronRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                   </Link>
@@ -516,7 +516,10 @@ export default function Dashboard() {
                 {getBusinessTypeConfig(business.type).name} Features
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-                {getBusinessModules(business.type, user.role).slice(0, 6).map((module) => {
+                {getBusinessModules(business.type, user.role)
+                  .filter(m => m.id !== "sales-documents" && m.id !== "main-dashboard")
+                  .slice(0, 4)
+                  .map((module) => {
                   const IconComponent = getIconComponent(module.icon);
                   return (
                     <Link key={module.id} to={module.path}>
