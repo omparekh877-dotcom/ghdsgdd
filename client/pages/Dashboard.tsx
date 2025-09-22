@@ -530,7 +530,7 @@ export default function Dashboard() {
                               <IconComponent className={`w-6 h-6 text-${getBusinessTypeConfig(business.type).primaryColor}-600`} />
                             </div>
                             <div>
-                              <CardTitle className={`text-lg group-hover:text-${getBusinessTypeConfig(business.type).primaryColor}-600 transition-colors truncate`}>
+                              <CardTitle className={`text-lg group-hover:text-${getBusinessTypeConfig(business.type).primaryColor}-600 transition-colors`}>
                                 {module.title}
                               </CardTitle>
                               <CardDescription className="text-sm">
