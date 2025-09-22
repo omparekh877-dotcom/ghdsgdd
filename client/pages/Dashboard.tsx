@@ -729,7 +729,7 @@ export default function Dashboard() {
                       <TrendingUp className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">New order received</p>
+                      <p className="text-sm font-medium text-gray-900 line-clamp-2">New order received</p>
                       <p className="text-sm text-gray-500">Recent order completed</p>
                     </div>
                     <div className="text-right">
@@ -744,7 +744,7 @@ export default function Dashboard() {
                         <Package className="w-5 h-5 text-white" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">Inventory updated</p>
+                        <p className="text-sm font-medium text-gray-900 line-clamp-2">Inventory updated</p>
                         <p className="text-sm text-gray-500">Products updated in inventory</p>
                       </div>
                       <div className="text-right">
@@ -760,7 +760,7 @@ export default function Dashboard() {
                         <User className="w-5 h-5 text-white" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">Team member joined</p>
+                        <p className="text-sm font-medium text-gray-900 line-clamp-2">Team member joined</p>
                         <p className="text-sm text-gray-500">New team member added</p>
                       </div>
                       <div className="text-right">
@@ -776,7 +776,7 @@ export default function Dashboard() {
                         <UserCheck className="w-5 h-5 text-white" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">Task completed</p>
+                        <p className="text-sm font-medium text-gray-900 line-clamp-2">Task completed</p>
                         <p className="text-sm text-gray-500">Monthly report generated</p>
                       </div>
                       <div className="text-right">
@@ -792,7 +792,7 @@ export default function Dashboard() {
                         <TrendingUp className="w-5 h-5 text-white" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">Commission earned</p>
+                        <p className="text-sm font-medium text-gray-900 line-clamp-2">Commission earned</p>
                         <p className="text-sm text-gray-500">Commission processed for sales team</p>
                       </div>
                       <div className="text-right">
