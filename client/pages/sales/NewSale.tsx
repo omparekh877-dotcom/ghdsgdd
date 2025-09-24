@@ -17,6 +17,8 @@ import { dataManager } from '@/lib/data-manager';
 import { professionalInvoiceService } from '@/lib/professional-invoice-service';
 import { authService } from '@/lib/auth-service';
 import { getBusinessData } from '@/lib/business-data';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ChevronDown } from 'lucide-react';
 
 interface LineItem { id: string; type: 'product' | 'service'; name: string; quantity: number; unitPrice: number; isCustom?: boolean; }
 
@@ -47,7 +49,7 @@ export default function NewSale() {
   const [items, setItems] = useState<LineItem[]>([]);
   const [staff, setStaff] = useState<{ id: string; name: string }[]>([]);
   const [generated, setGenerated] = useState<{ invoiceId: string; invoiceNumber: string; phone: string; data: any } | null>(null);
-  const [sendVia, setSendVia] = useState<'SMS'|'WhatsApp'>('SMS');
+  const [sendVia, setSendVia] = useState<'SMS'|'WhatsApp'|'Email'>("SMS");
   const [form, setForm] = useState<FormState>({
     productId: '',
     productLabel: '',
@@ -260,6 +262,26 @@ export default function NewSale() {
     }
   };
 
+  const sendInvoice = (channel: 'SMS'|'WhatsApp'|'Email') => {
+    if (!generated) return;
+    const phone = (generated.phone || '').replace(/\s+/g, '');
+    const origin = window.location.origin;
+    const link = `${origin}/dashboard/document-vault`;
+    const msg = encodeURIComponent(`Invoice ${generated.invoiceNumber}\nAmount: ₹${total.toFixed(2)}\nStatus: ${form.paymentStatus}\nLink: ${link}`);
+
+    if (channel === 'WhatsApp') {
+      if (!/^\+?[1-9]\d{7,14}$/.test(phone)) return;
+      window.open(`https://wa.me/${phone.replace(/^\+/, '')}?text=${msg}`, '_blank');
+    } else if (channel === 'SMS') {
+      if (!/^\+?[1-9]\d{7,14}$/.test(phone)) return;
+      window.open(`sms:${phone}?&body=${msg}`, '_self');
+    } else {
+      const subject = encodeURIComponent(`Invoice ${generated.invoiceNumber}`);
+      const body = msg;
+      window.open(`mailto:?subject=${subject}&body=${body}`, '_self');
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -267,189 +289,398 @@ export default function NewSale() {
         <BackButton />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Sale Details</CardTitle>
-            <CardDescription>Fill out the details to generate invoice</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-
-            <div className="space-y-2">
-              <Label>Add Product</Label>
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                <Select value={form.productId} onValueChange={onProductChange}>
-                  <SelectTrigger className="md:col-span-2"><SelectValue placeholder="Select product" /></SelectTrigger>
-                  <SelectContent>
-                    {products.map(p => (
-                      <SelectItem key={p.id} value={p.id}>{p.name}{p.sku ? ` (${p.sku})` : ''}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input placeholder="Or custom name" value={form.customProductName || ''} onChange={e=>setForm(prev=>({...prev, customProductName: e.target.value}))} />
-                <Input type="number" min={1} placeholder="Qty" value={form.productQty || 1} onChange={e => setForm(prev => ({ ...prev, productQty: Number(e.target.value) }))} />
-                <Input type="number" min={0} step={0.01} placeholder="Unit price" value={form.productUnitPrice || 0} onChange={e => setForm(prev => ({ ...prev, productUnitPrice: Number(e.target.value) }))} />
-              </div>
-              <div>
-                <Button type="button" variant="outline" className="h-11 w-full sm:w-auto" onClick={addProductItem}>Add Product</Button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Add Service</Label>
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                <Select value={form.serviceId} onValueChange={v => setForm(prev => ({ ...prev, serviceId: v }))}>
-                  <SelectTrigger className="md:col-span-2"><SelectValue placeholder="Select service" /></SelectTrigger>
-                  <SelectContent>
-                    {services.map(s => (
-                      <SelectItem key={s.id} value={s.id}>{s.name} (₹{(s.serviceCharge||0).toFixed(2)})</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input placeholder="Or custom service" value={form.customServiceName || ''} onChange={e=>setForm(prev=>({...prev, customServiceName: e.target.value}))} />
-                <Input type="number" min={1} placeholder="Qty" value={form.serviceQty || 1} onChange={e => setForm(prev => ({ ...prev, serviceQty: Number(e.target.value) }))} />
-                <Input type="number" min={0} step={0.01} placeholder="Unit price" value={form.serviceUnitPrice || 0} onChange={e => setForm(prev => ({ ...prev, serviceUnitPrice: Number(e.target.value) }))} />
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button type="button" variant="outline" className="h-11 w-full sm:w-auto" onClick={addServiceItem}>Add Service</Button>
-                <Button type="button" variant="outline" className="h-11 w-full sm:w-auto" onClick={addCustomService}>Add Custom Service</Button>
-              </div>
-            </div>
-
-            {items.length > 0 && (
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left column - Desktop/Tablet */}
+        <div className="hidden md:block lg:col-span-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Sale Details</CardTitle>
+              <CardDescription>Fill out the details to generate invoice</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Add Product */}
               <div className="space-y-2">
-                <Label>Line Items</Label>
-                {items.map((i,idx)=> (
-                  <div key={idx} className="grid grid-cols-1 md:grid-cols-6 gap-2 p-2 border rounded items-center">
-                    <Input value={i.name} onChange={e=>setItems(prev=> prev.map((it,j)=> j===idx?{...it,name:e.target.value}:it))} />
-                    <span className="text-xs text-gray-500">{i.type}</span>
-                    <Input type="number" min={1} value={i.quantity} onChange={e=>setItems(prev=> prev.map((it,j)=> j===idx?{...it,quantity:Number(e.target.value)}:it))} />
-                    <Input type="number" min={0} step={0.01} value={i.unitPrice} onChange={e=>setItems(prev=> prev.map((it,j)=> j===idx?{...it,unitPrice:Number(e.target.value)}:it))} />
-                    <div className="text-right font-medium">₹{(i.quantity*i.unitPrice).toFixed(2)}</div>
-                    <Button size="sm" variant="ghost" onClick={()=>removeItem(idx)}>Remove</Button>
+                <Label>Add Product</Label>
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                  <Select value={form.productId} onValueChange={onProductChange}>
+                    <SelectTrigger className="md:col-span-2"><SelectValue placeholder="Select product" /></SelectTrigger>
+                    <SelectContent>
+                      {products.map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}{p.sku ? ` (${p.sku})` : ''}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input placeholder="Or custom name" value={form.customProductName || ''} onChange={e=>setForm(prev=>({...prev, customProductName: e.target.value}))} />
+                  <Input type="number" inputMode="numeric" min={1} placeholder="Qty" value={form.productQty || 1} onChange={e => setForm(prev => ({ ...prev, productQty: Number(e.target.value) }))} />
+                  <Input type="number" inputMode="decimal" min={0} step={0.01} placeholder="Unit price" value={form.productUnitPrice || 0} onChange={e => setForm(prev => ({ ...prev, productUnitPrice: Number(e.target.value) }))} />
+                </div>
+                <div>
+                  <Button type="button" variant="outline" className="h-11 w-full sm:w-auto" onClick={addProductItem}>Add Product</Button>
+                </div>
+              </div>
+
+              {/* Add Service */}
+              <div className="space-y-2">
+                <Label>Add Service</Label>
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                  <Select value={form.serviceId} onValueChange={v => setForm(prev => ({ ...prev, serviceId: v }))}>
+                    <SelectTrigger className="md:col-span-2"><SelectValue placeholder="Select service" /></SelectTrigger>
+                    <SelectContent>
+                      {services.map(s => (
+                        <SelectItem key={s.id} value={s.id}>{s.name} (₹{(s.serviceCharge||0).toFixed(2)})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input placeholder="Or custom service" value={form.customServiceName || ''} onChange={e=>setForm(prev=>({...prev, customServiceName: e.target.value}))} />
+                  <Input type="number" inputMode="numeric" min={1} placeholder="Qty" value={form.serviceQty || 1} onChange={e => setForm(prev => ({ ...prev, serviceQty: Number(e.target.value) }))} />
+                  <Input type="number" inputMode="decimal" min={0} step={0.01} placeholder="Unit price" value={form.serviceUnitPrice || 0} onChange={e => setForm(prev => ({ ...prev, serviceUnitPrice: Number(e.target.value) }))} />
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button type="button" variant="outline" className="h-11 w-full sm:w-auto" onClick={addServiceItem}>Add Service</Button>
+                  <Button type="button" variant="outline" className="h-11 w-full sm:w-auto" onClick={addCustomService}>Add Custom Service</Button>
+                </div>
+              </div>
+
+              {/* Line items table (desktop/tablet) */}
+              {items.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Line Items</Label>
+                  <div className="table-enhanced overflow-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 sticky top-0">
+                        <tr>
+                          <th className="px-4 py-2 text-left">Item</th>
+                          <th className="px-4 py-2 text-left">Type</th>
+                          <th className="px-4 py-2 text-left">Qty</th>
+                          <th className="px-4 py-2 text-left">Rate</th>
+                          <th className="px-4 py-2 text-left">Tax %</th>
+                          <th className="px-4 py-2 text-right">Line Total</th>
+                          <th className="px-4 py-2 text-center">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {items.map((i, idx) => (
+                          <tr key={idx} className="border-t">
+                            <td className="px-4 py-2 align-middle min-w-40">
+                              <Input value={i.name} onChange={e=>setItems(prev=> prev.map((it,j)=> j===idx?{...it,name:e.target.value}:it))} />
+                            </td>
+                            <td className="px-4 py-2 align-middle capitalize">{i.type}</td>
+                            <td className="px-4 py-2 align-middle min-w-28">
+                              <Input type="number" min={1} value={i.quantity} onChange={e=>setItems(prev=> prev.map((it,j)=> j===idx?{...it,quantity:Number(e.target.value)}:it))} />
+                            </td>
+                            <td className="px-4 py-2 align-middle min-w-32">
+                              <Input type="number" min={0} step={0.01} value={i.unitPrice} onChange={e=>setItems(prev=> prev.map((it,j)=> j===idx?{...it,unitPrice:Number(e.target.value)}:it))} />
+                            </td>
+                            <td className="px-4 py-2 align-middle text-center">{(form.taxRate || 0).toFixed(2)}</td>
+                            <td className="px-4 py-2 align-middle text-right font-medium">₹{(i.quantity * i.unitPrice).toFixed(2)}</td>
+                            <td className="px-4 py-2 align-middle text-center">
+                              <Button size="sm" variant="ghost" onClick={()=>removeItem(idx)}>Remove</Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              )}
 
-            <div>
-              <Label>Tax rate (%)</Label>
-              <Input
-                type="number"
-                min={0}
-                max={100}
-                step={0.01}
-                placeholder="Optional"
-                value={Number.isFinite(form.taxRate) ? form.taxRate : ''}
-                onChange={e => setForm(prev => ({ ...prev, taxRate: e.target.value === '' ? 0 : Number(e.target.value) }))}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Tax & Payment */}
               <div>
-                <Label>Payment mode</Label>
-                <RadioGroup value={form.paymentMode} onValueChange={(v: any) => setForm(prev => ({ ...prev, paymentMode: v }))} className="flex gap-4">
-                  {['Cash','UPI','Card'].map(m => (
-                    <div key={m} className="flex items-center space-x-2">
-                      <RadioGroupItem id={`mode-${m}`} value={m} />
-                      <Label htmlFor={`mode-${m}`}>{m}</Label>
+                <Label>Tax rate (%)</Label>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  max={100}
+                  step={0.01}
+                  placeholder="Optional"
+                  value={Number.isFinite(form.taxRate) ? form.taxRate : ''}
+                  onChange={e => setForm(prev => ({ ...prev, taxRate: e.target.value === '' ? 0 : Number(e.target.value) }))}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Payment mode</Label>
+                  <RadioGroup value={form.paymentMode} onValueChange={(v: any) => setForm(prev => ({ ...prev, paymentMode: v }))} className="flex gap-4">
+                    {['Cash','UPI','Card'].map(m => (
+                      <div key={m} className="flex items-center space-x-2">
+                        <RadioGroupItem id={`mode-${m}`} value={m} />
+                        <Label htmlFor={`mode-${m}`}>{m}</Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+                <div>
+                  <Label>Payment status</Label>
+                  <RadioGroup value={form.paymentStatus} onValueChange={(v: any) => setForm(prev => ({ ...prev, paymentStatus: v }))} className="flex gap-4">
+                    {['Pending','Paid'].map(s => (
+                      <div key={s} className="flex items-center space-x-2">
+                        <RadioGroupItem id={`status-${s}`} value={s} />
+                        <Label htmlFor={`status-${s}`}>{s}</Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Customer phone</Label>
+                  <Input placeholder="+91 98765 43210" inputMode="tel" value={form.customerPhone} onChange={e => setForm(prev => ({ ...prev, customerPhone: e.target.value }))} />
+                  {!phoneValid && form.customerPhone && (
+                    <p className="text-xs text-red-600 mt-1">Enter a valid phone (E.164)</p>
+                  )}
+                </div>
+                <div>
+                  <Label>Customer name</Label>
+                  <Input value={form.customerName} onChange={e => setForm(prev => ({ ...prev, customerName: e.target.value }))} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Sales person</Label>
+                  <Select value={form.salespersonId} onValueChange={v => setForm(prev => ({ ...prev, salespersonId: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Select employee" /></SelectTrigger>
+                    <SelectContent>
+                      {staff.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  {form.salespersonId && (
+                    <div className="mt-2">
+                      <Label>Commission Rate (%)</Label>
+                      <Input type="number" inputMode="decimal" min={0} max={100} step={0.01} value={form.commissionRatePct || 0} onChange={e=> setForm(prev=> ({...prev, commissionRatePct: Number(e.target.value)}))} />
+                      <div className="text-sm text-gray-600 mt-1">Commission Amount: ₹{commissionAmount.toFixed(2)}</div>
                     </div>
-                  ))}
-                </RadioGroup>
+                  )}
+                </div>
+                <div>
+                  <Label>Description/Notes</Label>
+                  <Textarea rows={3} value={form.description} onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))} />
+                </div>
               </div>
-              <div>
-                <Label>Payment status</Label>
-                <RadioGroup value={form.paymentStatus} onValueChange={(v: any) => setForm(prev => ({ ...prev, paymentStatus: v }))} className="flex gap-4">
-                  {['Pending','Paid'].map(s => (
-                    <div key={s} className="flex items-center space-x-2">
-                      <RadioGroupItem id={`status-${s}`} value={s} />
-                      <Label htmlFor={`status-${s}`}>{s}</Label>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Left column - Mobile stepper */}
+        <div className="md:hidden">
+          <div className="space-y-3">
+            {/* Step 1 */}
+            <Card>
+              <CardHeader className="pb-2"><CardTitle className="text-base">Step 1: Add Product/Service</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                {/* Product */}
+                <div className="space-y-2">
+                  <Label>Product</Label>
+                  <div className="grid grid-cols-1 gap-3">
+                    <Select value={form.productId} onValueChange={onProductChange}>
+                      <SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger>
+                      <SelectContent>
+                        {products.map(p => (
+                          <SelectItem key={p.id} value={p.id}>{p.name}{p.sku ? ` (${p.sku})` : ''}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input placeholder="Or custom name" value={form.customProductName || ''} onChange={e=>setForm(prev=>({...prev, customProductName: e.target.value}))} />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input type="number" inputMode="numeric" min={1} placeholder="Qty" value={form.productQty || 1} onChange={e => setForm(prev => ({ ...prev, productQty: Number(e.target.value) }))} />
+                      <Input type="number" inputMode="decimal" min={0} step={0.01} placeholder="Unit price" value={form.productUnitPrice || 0} onChange={e => setForm(prev => ({ ...prev, productUnitPrice: Number(e.target.value) }))} />
                     </div>
-                  ))}
-                </RadioGroup>
-              </div>
-            </div>
+                  </div>
+                  <Button type="button" variant="outline" onClick={addProductItem}>Add Product</Button>
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Customer phone</Label>
-                <Input placeholder="+91 98765 43210" value={form.customerPhone} onChange={e => setForm(prev => ({ ...prev, customerPhone: e.target.value }))} />
-                {!phoneValid && form.customerPhone && (
-                  <p className="text-xs text-red-600 mt-1">Enter a valid phone (E.164)</p>
-                )}
-              </div>
-              <div>
-                <Label>Customer name</Label>
-                <Input value={form.customerName} onChange={e => setForm(prev => ({ ...prev, customerName: e.target.value }))} />
-              </div>
-            </div>
+                {/* Service */}
+                <div className="space-y-2">
+                  <Label>Service</Label>
+                  <div className="grid grid-cols-1 gap-3">
+                    <Select value={form.serviceId} onValueChange={v => setForm(prev => ({ ...prev, serviceId: v }))}>
+                      <SelectTrigger><SelectValue placeholder="Select service" /></SelectTrigger>
+                      <SelectContent>
+                        {services.map(s => (
+                          <SelectItem key={s.id} value={s.id}>{s.name} (₹{(s.serviceCharge||0).toFixed(2)})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input placeholder="Or custom service" value={form.customServiceName || ''} onChange={e=>setForm(prev=>({...prev, customServiceName: e.target.value}))} />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input type="number" inputMode="numeric" min={1} placeholder="Qty" value={form.serviceQty || 1} onChange={e => setForm(prev => ({ ...prev, serviceQty: Number(e.target.value) }))} />
+                      <Input type="number" inputMode="decimal" min={0} step={0.01} placeholder="Unit price" value={form.serviceUnitPrice || 0} onChange={e => setForm(prev => ({ ...prev, serviceUnitPrice: Number(e.target.value) }))} />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="button" variant="outline" className="flex-1" onClick={addServiceItem}>Add Service</Button>
+                    <Button type="button" variant="outline" className="flex-1" onClick={addCustomService}>Add Custom</Button>
+                  </div>
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Sales person</Label>
-                <Select value={form.salespersonId} onValueChange={v => setForm(prev => ({ ...prev, salespersonId: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Select employee" /></SelectTrigger>
-                  <SelectContent>
-                    {staff.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                {form.salespersonId && (
-                  <div className="mt-2">
-                    <Label>Commission Rate (%)</Label>
-                    <Input type="number" min={0} max={100} step={0.01} value={form.commissionRatePct || 0} onChange={e=> setForm(prev=> ({...prev, commissionRatePct: Number(e.target.value)}))} />
-                    <div className="text-sm text-gray-600 mt-1">Commission Amount: ₹{commissionAmount.toFixed(2)}</div>
+                {/* Line items as cards */}
+                {items.length > 0 && (
+                  <div className="space-y-3">
+                    {items.map((i, idx) => (
+                      <div key={idx} className="product-card">
+                        <div className="content-spacing">
+                          <Input value={i.name} onChange={e=>setItems(prev=> prev.map((it,j)=> j===idx?{...it,name:e.target.value}:it))} />
+                          <div className="grid grid-cols-2 gap-2">
+                            <Input type="number" inputMode="numeric" min={1} value={i.quantity} onChange={e=>setItems(prev=> prev.map((it,j)=> j===idx?{...it,quantity:Number(e.target.value)}:it))} />
+                            <Input type="number" inputMode="decimal" min={0} step={0.01} value={i.unitPrice} onChange={e=>setItems(prev=> prev.map((it,j)=> j===idx?{...it,unitPrice:Number(e.target.value)}:it))} />
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground capitalize">{i.type}</span>
+                            <span className="font-medium">₹{(i.quantity * i.unitPrice).toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-end">
+                            <Button size="sm" variant="ghost" onClick={()=>removeItem(idx)}>Remove</Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
-              </div>
-              <div>
-                <Label>Description/Notes</Label>
-                <Textarea rows={3} value={form.description} onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Invoice Summary</CardTitle>
-            <CardDescription>Live calculation</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Subtotal</span>
-              <span className="font-medium">₹{subtotal.toFixed(2)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Tax ({form.taxRate || 0}%)</span>
-              <span className="font-medium">₹{taxAmount.toFixed(2)}</span>
-            </div>
-            {form.salespersonId && (
+            {/* Step 2 */}
+            <Card>
+              <CardHeader className="pb-2"><CardTitle className="text-base">Step 2: Customer Details</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Label>Customer phone</Label>
+                  <Input placeholder="+91 98765 43210" inputMode="tel" value={form.customerPhone} onChange={e => setForm(prev => ({ ...prev, customerPhone: e.target.value }))} />
+                  {!phoneValid && form.customerPhone && (
+                    <p className="text-xs text-red-600 mt-1">Enter a valid phone (E.164)</p>
+                  )}
+                </div>
+                <div>
+                  <Label>Customer name</Label>
+                  <Input value={form.customerName} onChange={e => setForm(prev => ({ ...prev, customerName: e.target.value }))} />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Step 3 */}
+            <Card>
+              <CardHeader className="pb-2"><CardTitle className="text-base">Step 3: Payment Info</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Label>Payment mode</Label>
+                  <RadioGroup value={form.paymentMode} onValueChange={(v: any) => setForm(prev => ({ ...prev, paymentMode: v }))} className="flex gap-4">
+                    {['Cash','UPI','Card'].map(m => (
+                      <div key={m} className="flex items-center space-x-2">
+                        <RadioGroupItem id={`mode-m-${m}`} value={m} />
+                        <Label htmlFor={`mode-m-${m}`}>{m}</Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+                <div>
+                  <Label>Payment status</Label>
+                  <RadioGroup value={form.paymentStatus} onValueChange={(v: any) => setForm(prev => ({ ...prev, paymentStatus: v }))} className="flex gap-4">
+                    {['Pending','Paid'].map(s => (
+                      <div key={s} className="flex items-center space-x-2">
+                        <RadioGroupItem id={`status-m-${s}`} value={s} />
+                        <Label htmlFor={`status-m-${s}`}>{s}</Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+                <div>
+                  <Label>Sales person</Label>
+                  <Select value={form.salespersonId} onValueChange={v => setForm(prev => ({ ...prev, salespersonId: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Select employee" /></SelectTrigger>
+                    <SelectContent>
+                      {staff.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  {form.salespersonId && (
+                    <div className="mt-2">
+                      <Label>Commission Rate (%)</Label>
+                      <Input type="number" inputMode="decimal" min={0} max={100} step={0.01} value={form.commissionRatePct || 0} onChange={e=> setForm(prev=> ({...prev, commissionRatePct: Number(e.target.value)}))} />
+                      <div className="text-sm text-gray-600 mt-1">Commission Amount: ₹{commissionAmount.toFixed(2)}</div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Step 4 */}
+            <Card>
+              <CardHeader className="pb-2"><CardTitle className="text-base">Step 4: Notes + Summary</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Label>Description/Notes</Label>
+                  <Textarea rows={3} value={form.description} onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))} />
+                </div>
+                <div className="rounded-lg border p-3 bg-gray-50">
+                  <div className="flex items-center justify-between text-sm"><span>Subtotal</span><span>₹{subtotal.toFixed(2)}</span></div>
+                  <div className="flex items-center justify-between text-sm"><span>Tax ({form.taxRate || 0}%)</span><span>₹{taxAmount.toFixed(2)}</span></div>
+                  <div className="flex items-center justify-between text-base font-semibold mt-1"><span>Total</span><span>₹{total.toFixed(2)}</span></div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Right column (sticky) */}
+        <div className="lg:col-span-4 lg:sticky lg:top-20 self-start hidden lg:block">
+          <Card>
+            <CardHeader>
+              <CardTitle>Invoice Summary</CardTitle>
+              <CardDescription>Live calculation</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Commission ({(form.commissionRatePct||0).toFixed(2)}%)</span>
-                <span className="font-medium">��{commissionAmount.toFixed(2)}</span>
+                <span className="text-sm text-gray-600">Subtotal</span>
+                <span className="font-medium">₹{subtotal.toFixed(2)}</span>
               </div>
-            )}
-            <div className="flex items-center justify-between border-t pt-2">
-              <span className="text-sm text-gray-600">Total</span>
-              <span className="text-lg font-semibold">₹{total.toFixed(2)}</span>
-            </div>
-            <div>
-              {form.paymentStatus === 'Paid' ? (
-                <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-full">Fully Paid</span>
-              ) : (
-                <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">Pending</span>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Tax ({form.taxRate || 0}%)</span>
+                <span className="font-medium">₹{taxAmount.toFixed(2)}</span>
+              </div>
+              {form.salespersonId && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Commission ({(form.commissionRatePct||0).toFixed(2)}%)</span>
+                  <span className="font-medium">₹{commissionAmount.toFixed(2)}</span>
+                </div>
               )}
-            </div>
+              <div className="flex items-center justify-between border-t pt-2">
+                <span className="text-sm text-gray-600">Total</span>
+                <span className="text-lg font-semibold">₹{total.toFixed(2)}</span>
+              </div>
+              <div>
+                {form.paymentStatus === 'Paid' ? (
+                  <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-full">Fully Paid</span>
+                ) : (
+                  <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">Pending</span>
+                )}
+              </div>
 
-            <div className="flex flex-col sm:flex-row gap-2 pt-2">
-              <Button onClick={generateInvoice} disabled={!canGenerate || submitting} className="w-full sm:w-auto">Generate Invoice</Button>
-              <Button variant="outline" onClick={saveAsDraft} disabled={submitting} className="w-full sm:w-auto">Save as Draft</Button>
-              {form.paymentStatus === 'Pending' && (
-                <Button variant="secondary" onClick={markPaid} disabled={submitting} className="w-full sm:w-auto">Mark Fully Paid</Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                <Button onClick={generateInvoice} disabled={!canGenerate || submitting} className="w-full sm:w-auto">Generate Invoice</Button>
+                <Button variant="outline" onClick={saveAsDraft} disabled={submitting} className="w-full sm:w-auto">Save as Draft</Button>
+                {form.paymentStatus === 'Pending' && (
+                  <Button variant="secondary" onClick={markPaid} disabled={submitting} className="w-full sm:w-auto">Mark Fully Paid</Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Mobile sticky bottom summary */}
+      <div className="fixed md:hidden bottom-0 inset-x-0 z-40 px-4 pb-[env(safe-area-inset-bottom)] pt-2 bg-white/95 backdrop-blur border-t shadow-lg">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-xs text-muted-foreground">Total</div>
+            <div className="text-lg font-semibold">₹{total.toFixed(2)}</div>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={generateInvoice} disabled={!canGenerate || submitting}>Generate</Button>
+            <Button variant="outline" onClick={saveAsDraft} disabled={submitting}>Draft</Button>
+          </div>
+        </div>
       </div>
 
       {generated && (
@@ -461,34 +692,23 @@ export default function NewSale() {
           <CardContent className="space-y-4">
             <ProfessionalInvoice invoiceData={generated.data} showActions={false} />
             <div className="flex flex-col sm:flex-row gap-3 items-end justify-between">
-              <div className="flex items-center gap-3">
-                <Label className="text-sm">Send via</Label>
-                <select
-                  className="px-3 py-2 border rounded-md text-sm"
-                  value={sendVia}
-                  onChange={(e)=> setSendVia(e.target.value as any)}
-                >
-                  <option value="SMS">SMS</option>
-                  <option value="WhatsApp">WhatsApp</option>
-                </select>
-              </div>
-              <Button
-                onClick={() => {
-                  const phone = (generated.phone || '').replace(/\s+/g, '');
-                  const origin = window.location.origin;
-                  const link = `${origin}/dashboard/document-vault`;
-                  const msg = encodeURIComponent(`Invoice ${generated.invoiceNumber}\nAmount: ₹${total.toFixed(2)}\nStatus: ${form.paymentStatus}\nLink: ${link}`);
-                  if (!/^\+?[1-9]\d{7,14}$/.test(phone)) return;
-                  if (sendVia === 'WhatsApp') {
-                    window.open(`https://wa.me/${phone.replace(/^\+/, '')}?text=${msg}`, '_blank');
-                  } else {
-                    window.open(`sms:${phone}?&body=${msg}`, '_self');
-                  }
-                }}
-                className="min-w-28"
-              >
-                Send
-              </Button>
+              <div className="text-sm text-gray-600">Invoice details are shown below.</div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="min-w-36 justify-between">
+                    Send via {sendVia}
+                    <ChevronDown className="w-4 h-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {(['SMS','WhatsApp','Email'] as const).map(ch => (
+                    <DropdownMenuItem key={ch} onSelect={(e) => { e.preventDefault(); setSendVia(ch); sendInvoice(ch); }}>
+                      {ch}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </CardContent>
         </Card>

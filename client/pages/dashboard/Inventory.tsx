@@ -11,22 +11,20 @@ import {
   Search, 
   Filter, 
   Edit, 
-  Trash2, 
   Eye, 
   BarChart3,
   AlertTriangle,
   CheckCircle,
-  Archive,
   TrendingDown,
   Calendar,
-  Warehouse,
-  Settings
+  Warehouse
 } from 'lucide-react';
 import { usePermissions } from '@/lib/permissions';
 import { inventoryService } from '@/lib/inventory-service';
 import { formatCurrency } from '@/lib/business-data';
 import { dataManager } from '@/lib/data-manager';
 import BackButton from '@/components/BackButton';
+import { SmartImportButton } from '@/components/import/SmartImportButton';
 
 interface Product {
   id: string;
@@ -40,14 +38,11 @@ interface Product {
   lastUpdated: string;
 }
 
-// Inventory products are now loaded from data manager - no mock data
-
 export default function Inventory() {
   const permissions = usePermissions();
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    // Load products from data manager
     const loadedProducts = dataManager.getAllProducts().map(p => ({
       id: p.id,
       name: p.name,
@@ -61,13 +56,13 @@ export default function Inventory() {
     }));
     setProducts(loadedProducts);
   }, []);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [lowStockProducts, setLowStockProducts] = useState<any[]>([]);
   const [expiryAlerts, setExpiryAlerts] = useState<any[]>([]);
 
   useEffect(() => {
-    // Load data from inventory service
     setLowStockProducts(inventoryService.getLowStockProducts());
     setExpiryAlerts(inventoryService.getExpiryAlerts(false));
   }, []);
@@ -77,7 +72,10 @@ export default function Inventory() {
       <div className="p-6">
         <Card>
           <CardContent className="p-6 text-center">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Access Restricted</h3>
+            <div className="flex items-center justify-center mb-3">
+              <AlertTriangle className="w-5 h-5 text-gray-500 mr-2" />
+              <h3 className="text-lg font-medium text-gray-900">Access Restricted</h3>
+            </div>
             <p className="text-gray-500">You don't have permission to access inventory management.</p>
           </CardContent>
         </Card>
@@ -118,21 +116,24 @@ export default function Inventory() {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <BackButton className="mb-4" />
-          <h1 className="text-3xl font-semibold text-gray-900 flex items-center gap-3 leading-[1.3]" style={{ wordBreak: 'keep-all', hyphens: 'auto' }}>
+          <h1 className="text-3xl font-semibold text-gray-900 flex items-center gap-3 leading-[1.3]">
             <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center">
               <Package className="w-6 h-6 text-white" />
             </div>
             Inventory Management
           </h1>
-          <p className="text-gray-600 mt-1 leading-[1.3]" style={{ wordBreak: 'keep-all', hyphens: 'auto' }}>
-            Manage products, stock levels, and inventory alerts
-          </p>
+          <p className="text-gray-600 mt-1 leading-[1.3]">Manage products, stock levels, and inventory alerts</p>
         </div>
-        
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 chip-row">
+        {/* Grouped quick actions */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Button variant="outline" className="h-8 px-2.5 rounded-full whitespace-nowrap" onClick={() => window.location.href = '/dashboard/inventory-batches'}>
             <Calendar className="w-4 h-4 mr-2" />
             Batch Tracking
+          </Button>
+          <SmartImportButton onImport={() => { /* no-op UI grouping */ }} />
+          <Button variant="outline" className="h-8 px-2.5 rounded-full whitespace-nowrap">
+            <Filter className="w-4 h-4 mr-2" />
+            Filters
           </Button>
           <Button className="h-11 w-full sm:w-auto">
             <Plus className="w-4 h-4 mr-2" />
@@ -146,7 +147,6 @@ export default function Inventory() {
         <div className="space-y-4">
           {outOfStockCount > 0 && (
             <Alert className="border-red-200 bg-red-50">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
               <AlertDescription>
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-red-800">
@@ -159,10 +159,8 @@ export default function Inventory() {
               </AlertDescription>
             </Alert>
           )}
-          
           {lowStockCount > 0 && (
             <Alert className="border-orange-200 bg-orange-50">
-              <TrendingDown className="h-4 w-4 text-orange-600" />
               <AlertDescription>
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-orange-800">
@@ -175,10 +173,8 @@ export default function Inventory() {
               </AlertDescription>
             </Alert>
           )}
-
           {expiryAlerts.length > 0 && (
             <Alert className="border-yellow-200 bg-yellow-50">
-              <Calendar className="h-4 w-4 text-yellow-600" />
               <AlertDescription>
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-yellow-800">
@@ -199,7 +195,7 @@ export default function Inventory() {
         </div>
       )}
 
-      {/* Overview Stats */}
+      {/* KPI cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
         <Card>
           <CardContent className="p-6">
@@ -212,7 +208,6 @@ export default function Inventory() {
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -224,7 +219,6 @@ export default function Inventory() {
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -236,7 +230,6 @@ export default function Inventory() {
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -262,16 +255,14 @@ export default function Inventory() {
           <Card>
             <CardHeader>
               <CardTitle>Product Inventory</CardTitle>
-              <CardDescription>
-                Manage your product catalog and stock levels
-              </CardDescription>
+              <CardDescription>Manage your product catalog and stock levels</CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Filters */}
+              {/* Filters row */}
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
                 <div className="flex-1">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
                       placeholder="Search products by name or SKU..."
                       value={searchTerm}
@@ -292,76 +283,86 @@ export default function Inventory() {
                 </select>
               </div>
 
-              {/* Products List */}
-              <div className="space-y-4">
+              {/* Product Table (desktop/tablet) */}
+              <div className="table-enhanced overflow-x-auto hidden md:block">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0">
+                    <tr>
+                      <th className="px-4 py-2 text-left">Name</th>
+                      <th className="px-4 py-2 text-left">SKU</th>
+                      <th className="px-4 py-2 text-left">Category</th>
+                      <th className="px-4 py-2 text-left">Price</th>
+                      <th className="px-4 py-2 text-left">Stock</th>
+                      <th className="px-4 py-2 text-left">Status</th>
+                      <th className="px-4 py-2 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredProducts.map((product) => (
+                      <tr key={product.id}>
+                        <td className="px-4 py-2 font-medium">{product.name}</td>
+                        <td className="px-4 py-2 text-gray-600">{product.sku}</td>
+                        <td className="px-4 py-2 text-gray-600">{product.category}</td>
+                        <td className="px-4 py-2">{formatCurrency(product.price)}</td>
+                        <td className={"px-4 py-2 font-medium " + getStockStatusColor(product.stock, product.minStock)}>{product.stock}</td>
+                        <td className="px-4 py-2"><Badge className={getStatusColor(product.status)}>{product.status.replace('_',' ')}</Badge></td>
+                        <td className="px-4 py-2">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" size="sm"><Eye className="w-4 h-4 mr-2" /> View</Button>
+                            <Button variant="outline" size="sm"><Edit className="w-4 h-4 mr-2" /> Edit</Button>
+                            <Button variant="outline" size="sm"><BarChart3 className="w-4 h-4 mr-2" /> Analytics</Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile card list */}
+              <div className="md:hidden space-y-3">
                 {filteredProducts.map((product) => (
-                  <div key={product.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg border">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                        product.status === 'out_of_stock' ? 'bg-red-100 text-red-600' :
-                        product.stock <= product.minStock ? 'bg-orange-100 text-orange-600' :
-                        'bg-green-100 text-green-600'
-                      }`}>
-                        <Package className="w-6 h-6" />
+                  <div key={product.id} className="product-card">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">{product.name}</div>
+                        <div className="text-xs text-gray-500">SKU: {product.sku} • {product.category}</div>
+                      </div>
+                      <Badge className={getStatusColor(product.status)}>{product.status.replace('_',' ')}</Badge>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <div className="text-gray-500">Price</div>
+                        <div className="font-medium">{formatCurrency(product.price)}</div>
                       </div>
                       <div>
-                        <p className="font-medium">{product.name}</p>
-                        <p className="text-sm text-gray-500">
-                          SKU: {product.sku} • Category: {product.category}
-                        </p>
-                        <div className="flex items-center gap-4 mt-1">
-                          <span className="text-sm font-medium">
-                            Price: {formatCurrency(product.price)}
-                          </span>
-                          <span className={`text-sm font-medium ${getStockStatusColor(product.stock, product.minStock)}`}>
-                            Stock: {product.stock} units
-                          </span>
-                          <Badge className={getStatusColor(product.status)}>
-                            {product.status.replace('_', ' ')}
-                          </Badge>
-                        </div>
+                        <div className="text-gray-500">Stock</div>
+                        <div className={"font-medium " + getStockStatusColor(product.stock, product.minStock)}>{product.stock}</div>
                       </div>
                     </div>
-                    <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 justify-start sm:justify-end">
-                      <Button variant="outline" size="sm">
-                        <Eye className="w-4 h-4 mr-2" />
-                        View
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <BarChart3 className="w-4 h-4 mr-2" />
-                        Analytics
-                      </Button>
+                    <div className="mt-3 flex gap-2">
+                      <Button variant="outline" className="flex-1">View</Button>
+                      <Button variant="outline" className="flex-1">Edit</Button>
                     </div>
                   </div>
                 ))}
-
-                {filteredProducts.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p>No products found</p>
-                    <p className="text-sm">Try adjusting your search or filters</p>
-                  </div>
-                )}
               </div>
+
+              {/* Empty state */}
+              {filteredProducts.length === 0 && (
+                <div className="text-center py-10">
+                  <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p className="font-medium">No products found</p>
+                  <p className="text-sm text-gray-500 mb-4">Start by adding a product or importing your catalog</p>
+                  <div className="flex items-center justify-center gap-2">
+                    <Button><Plus className="w-4 h-4 mr-2" /> Add Product</Button>
+                    <SmartImportButton onImport={() => { /* no-op */ }} variant="outline" size="default" />
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
-
-        {/* Sticky mobile action bar */}
-        <div className="fixed bottom-0 inset-x-0 z-40 md:hidden px-4 pb-[env(safe-area-inset-bottom)] pt-2 bg-white/95 backdrop-blur border-t shadow-lg">
-          <div className="flex gap-2">
-            <Button className="flex-1">
-              <Plus className="w-4 h-4 mr-2" /> Add Product
-            </Button>
-            <Button variant="outline" className="flex-1" onClick={() => (window.location.href = '/dashboard/inventory-batches')}>
-              <Calendar className="w-4 h-4 mr-2" /> Batches
-            </Button>
-          </div>
-        </div>
 
         {/* Low Stock Tab */}
         <TabsContent value="lowstock">
@@ -371,35 +372,17 @@ export default function Inventory() {
                 <TrendingDown className="w-5 h-5 text-orange-600" />
                 Low Stock Products
               </CardTitle>
-              <CardDescription>
-                Products that need restocking
-              </CardDescription>
+              <CardDescription>Products that need restocking</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {products.filter(p => p.stock <= p.minStock && p.stock > 0).map((product) => (
                   <div key={product.id} className="flex items-center justify-between p-4 rounded-lg border border-orange-200 bg-orange-50">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-orange-200 text-orange-700 rounded-full flex items-center justify-center">
-                        <TrendingDown className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{product.name}</p>
-                        <p className="text-sm text-gray-600">
-                          Current: {product.stock} • Minimum: {product.minStock}
-                        </p>
-                        <div className="w-32 bg-gray-200 rounded-full h-2 mt-1">
-                          <div 
-                            className="bg-orange-500 h-2 rounded-full" 
-                            style={{ width: `${Math.min((product.stock / product.minStock) * 100, 100)}%` }}
-                          ></div>
-                        </div>
-                      </div>
+                    <div>
+                      <p className="font-medium">{product.name}</p>
+                      <p className="text-sm text-gray-600">Current: {product.stock} • Minimum: {product.minStock}</p>
                     </div>
-                    <Button variant="outline" size="sm">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Restock
-                    </Button>
+                    <Button variant="outline" size="sm">Restock</Button>
                   </div>
                 ))}
 
@@ -423,37 +406,19 @@ export default function Inventory() {
                 <AlertTriangle className="w-5 h-5 text-red-600" />
                 Out of Stock Products
               </CardTitle>
-              <CardDescription>
-                Products that are completely out of stock
-              </CardDescription>
+              <CardDescription>Products that are completely out of stock</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {products.filter(p => p.stock === 0).map((product) => (
                   <div key={product.id} className="flex items-center justify-between p-4 rounded-lg border border-red-200 bg-red-50">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-red-200 text-red-700 rounded-full flex items-center justify-center">
-                        <AlertTriangle className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{product.name}</p>
-                        <p className="text-sm text-gray-600">
-                          SKU: {product.sku} • Last updated: {product.lastUpdated}
-                        </p>
-                        <p className="text-sm text-red-600 font-medium">
-                          URGENT: Immediate restocking required
-                        </p>
-                      </div>
+                    <div>
+                      <p className="font-medium">{product.name}</p>
+                      <p className="text-sm text-gray-600">SKU: {product.sku} • Last updated: {product.lastUpdated}</p>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <Archive className="w-4 h-4 mr-2" />
-                        Deactivate
-                      </Button>
-                      <Button size="sm" className="bg-red-600 hover:bg-red-700">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Urgent Restock
-                      </Button>
+                      <Button variant="outline" size="sm">Deactivate</Button>
+                      <Button size="sm" className="bg-red-600 hover:bg-red-700">Urgent Restock</Button>
                     </div>
                   </div>
                 ))}
@@ -470,6 +435,16 @@ export default function Inventory() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Sticky mobile action bar */}
+      <div className="fixed bottom-0 inset-x-0 z-40 md:hidden px-4 pb-[env(safe-area-inset-bottom)] pt-2 bg-white/95 backdrop-blur border-t shadow-lg">
+        <div className="flex gap-2">
+          <Button className="flex-1"><Plus className="w-4 h-4 mr-2" /> Add Product</Button>
+          <Button variant="outline" className="flex-1" onClick={() => (window.location.href = '/dashboard/inventory-batches')}>
+            <Calendar className="w-4 h-4 mr-2" /> Batches
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
