@@ -283,8 +283,8 @@ export default function Inventory() {
                 </select>
               </div>
 
-              {/* Product Table */}
-              <div className="table-enhanced overflow-x-auto">
+              {/* Product Table (desktop/tablet) */}
+              <div className="table-enhanced overflow-x-auto hidden md:block">
                 <table className="w-full text-sm">
                   <thead className="sticky top-0">
                     <tr>
@@ -317,6 +317,35 @@ export default function Inventory() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile card list */}
+              <div className="md:hidden space-y-3">
+                {filteredProducts.map((product) => (
+                  <div key={product.id} className="product-card">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">{product.name}</div>
+                        <div className="text-xs text-gray-500">SKU: {product.sku} • {product.category}</div>
+                      </div>
+                      <Badge className={getStatusColor(product.status)}>{product.status.replace('_',' ')}</Badge>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <div className="text-gray-500">Price</div>
+                        <div className="font-medium">{formatCurrency(product.price)}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500">Stock</div>
+                        <div className={"font-medium " + getStockStatusColor(product.stock, product.minStock)}>{product.stock}</div>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex gap-2">
+                      <Button variant="outline" className="flex-1">View</Button>
+                      <Button variant="outline" className="flex-1">Edit</Button>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {/* Empty state */}
